@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.0)
-set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11" )
 
 PROJECT(mnist_example)
 
@@ -11,11 +10,15 @@ if(NOT MNIST_FOUND)
     message(FATAL_ERROR "MNIST loader could not be found. It is available under https://github.com/wichtounet/mnist")
 endif(NOT MNIST_FOUND)
 
+
+enable_language(CUDA)
+
 find_package( OpenCV REQUIRED )
 include_directories(${MNIST_INCLUDE_DIR})
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 add_executable(main main.cpp)
-cuda_add_executable(main_gpu main_gpu.cu OPTIONS -std=c++11)
+add_executable(main_gpu main_gpu.cpp})
+set_property(TARGET main_gpu PROPERTY CUDA_STANDARD 11)
 target_compile_features(main PRIVATE cxx_range_for)
 target_link_libraries( main ${OpenCV_LIBS} )
 
