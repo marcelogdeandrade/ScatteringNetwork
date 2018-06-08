@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11" )
 
 PROJECT(mnist_example)
 
@@ -14,6 +15,7 @@ find_package( OpenCV REQUIRED )
 include_directories(${MNIST_INCLUDE_DIR})
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 add_executable(main main.cpp)
+cuda_add_executable(main_gpu main_gpu.cu OPTIONS -std=c++11)
 target_compile_features(main PRIVATE cxx_range_for)
 target_link_libraries( main ${OpenCV_LIBS} )
 

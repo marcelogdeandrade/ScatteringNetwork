@@ -111,11 +111,11 @@ int main() {
     // Set up RTress for OpenCV 3
     Ptr<RTrees> rtrees = RTrees::create();
     // Set Max Depth
-    rtrees->setMaxDepth(30);
+    rtrees->setMaxDepth(10);
     rtrees->setMinSampleCount(2);
     rtrees->setRegressionAccuracy(0);
     rtrees->setUseSurrogates(false);
-    rtrees->setMaxCategories(16);
+    rtrees->setMaxCategories(5);
     rtrees->setPriors(cv::Mat());
     rtrees->setCalculateVarImportance(false);
     rtrees->setActiveVarCount(0);
@@ -145,11 +145,11 @@ int main() {
     // Set up RTress for OpenCV 3
     Ptr<RTrees> rtrees_feat = RTrees::create();
     // Set Max Depth
-    rtrees_feat->setMaxDepth(30);
+    rtrees_feat->setMaxDepth(10);
     rtrees_feat->setMinSampleCount(2);
     rtrees_feat->setRegressionAccuracy(0);
     rtrees_feat->setUseSurrogates(false);
-    rtrees_feat->setMaxCategories(16);
+    rtrees_feat->setMaxCategories(5);
     rtrees_feat->setPriors(cv::Mat());
     rtrees_feat->setCalculateVarImportance(false);
     rtrees_feat->setActiveVarCount(0);
@@ -180,10 +180,13 @@ std::vector<cv::Mat> get_kernels(){
     int num_kernels = 8;
     int kernel_size = 28;
     double sig = 1, lm = 1, gm = 0.02, ps = 0, theta = 0;
-    for (int i = 0; i < num_kernels; i++){
-        cv::Mat kernel = cv::getGaborKernel(cv::Size(kernel_size,kernel_size), sig, theta, lm, gm, ps, CV_32F);
-        theta += M_PI / (num_kernels);
-        result.push_back(kernel);
+    for (int j = 0; j < 4; j++){
+        for (int i = 0; i < num_kernels; i++){
+            cv::Mat kernel = cv::getGaborKernel(cv::Size(kernel_size,kernel_size), sig, theta, lm, gm, ps, CV_32F);
+            theta += M_PI / (num_kernels);
+            result.push_back(kernel);
+        }
+        sig += 1;
     }
     return result;
 }
