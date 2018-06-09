@@ -198,6 +198,7 @@ std::vector<cv::Mat> apply_filters(std::vector<cv::Mat> kernels, cv::Mat image){
         // Create GPU MAT and apply filter
         cv::cuda::GpuMat gpu_image, gpu_filtered_image;
         gpu_image.upload(image);
+        Ptr<cuda::Convolution> convolver = cuda::createConvolution(Size(28, 28));
         cv::cuda::filter2D(gpu_image, gpu_filtered_image, gpu_image.depth(), *it);
         gpu_filtered_image.download(out);
 
