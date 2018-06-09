@@ -8,12 +8,13 @@
 #include <iostream>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/cuda.hpp>
+#include <opencv2/core/cuda/filters.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/ml/ml.hpp>
 #include "mnist/mnist_reader.hpp"
 #include <math.h>
 #include "main.hpp"
-#include "opencv2/gpu/gpu.hpp"
 
 using namespace cv;
 using namespace cv::ml;
@@ -94,7 +95,7 @@ int main() {
     std::memcpy(Y_uint.data, dataset.training_labels.data(), dataset.training_labels.size());
     Y_uint.convertTo(Y, CV_32S);
     std::cout << "Y " << Y.rows << ": " << Y.cols << "\n";
-
+		
     cv::Mat Y_test_uint = cv::Mat(size_test, 1, CV_8U);
     cv::Mat Y_test = cv::Mat(size_test, 1, CV_32S);
     std::memcpy(Y_test_uint.data, dataset.test_labels.data(), dataset.test_labels.size());
@@ -195,9 +196,9 @@ std::vector<cv::Mat> apply_filters(std::vector<cv::Mat> kernels, cv::Mat image){
         cv::Mat out = cv::Mat(28,28,CV_8U);
 
         // Create GPU MAT and apply filter
-        cv::gpu::GpuMat gpu_image, gpu_filtered_image;
+        cv::cuda::GpuMat gpu_image, gpu_filtered_image;
         gpu_image.upload(image);
-        cv::gpu::filter2D(gpu_image, gpu_filtered_image, gpu_image.depth(), *it);
+        cv::cuda::filter2D(gpu_image, gpu_filtered_image, gpu_image.depth(), *it);
         gpu_filtered_image.download(out);
 
         result.push_back(out);
@@ -223,9 +224,9 @@ std::vector<cv::Mat> apply_blur(std::vector<cv::Mat> images){
         cv::Mat blur_image;
 
         // Create GPU MAT and apply blur
-        cv::gpu::GpuMat gpu_image, gpu_blurred_image;
+        cv::cuda::GpuMat gpu_image, gpu_blurred_image;
         gpu_image.upload(image);
-        cv::gpu::blur(gpu_image, gpu_blurred_image, cv::Size(5,5));
+        cv::cuda::blur(gpu_image, gpu_blurred_image, cv::Size(5,5));
         gpu_blurred_image.download(blur_image);
 
         result.push_back(blur_image);
