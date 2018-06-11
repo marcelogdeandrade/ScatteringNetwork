@@ -15,6 +15,7 @@
 #include "mnist/mnist_reader.hpp"
 #include <math.h>
 #include "main.hpp"
+#include <ctime>
 
 using namespace cv;
 using namespace cv::ml;
@@ -124,23 +125,25 @@ int main() {
 }
 
 // Util Functions
-std::vector<cv::Mat> get_kernels(){
-    std::vector<cv::Mat> result;
+std::vector<cv::cuda::GpuMat> get_kernels(){
+    std::vector<cv::cuda::GpuMat> result;
     int num_kernels = 8;
     int kernel_size = 3;
     double sig = 1, lm = 1, gm = 0.02, ps = 0, theta = 0;
     for (int i = 0; i < num_kernels; i++){
+        cv::cuda::GpuMat kernel_gpu;
         cv::Mat kernel = cv::getGaborKernel(cv::Size(kernel_size,kernel_size), sig, theta, lm, gm, ps, CV_32F);
         theta += M_PI / (num_kernels);
-        result.push_back(kernel);
+        kernel_gpu.upload(kernel);
+        result.push_back(kernel_gpu);
     }
     return result;
 }
 
-std::vector<cv::Mat> apply_filters(std::vector<cv::Mat> kernels, cv::Mat image){
-    std::vector<cv::Mat> result;
-    for (std::vector<cv::Mat>::iterator it = kernels.begin() ; it != kernels.end(); ++it){
-        cv::Mat out = cv::Mat(26,26,CV_32F);
+std::vector<cv::cuda::GpuMat> apply_filters(std::vector<cv::cuda::GpuMat> kernels, cv::cuda::GpuMat image){
+    std::vector<cv::cuda::GpuMat> result;
+    for (std::vector<cv::cuda::GpuMat>::iterator it = kernels.begin() ; it != kernels.end(); ++it){
+        cv::cuda::GpuMat out = cv::cuda::GpuMat(118,118,CV_32F);
         
         // Create GPU MAT and apply filter
         //cv::cuda::GpuMat gpu_image, gpu_filtered_image;
@@ -166,37 +169,60 @@ std::vector<uint8_t> images_to_vector(std::vector<cv::Mat> images){
     return result;
 }
 
-std::vector<cv::Mat> apply_blur(std::vector<cv::Mat> images){
-    std::vector<cv::Mat> result;
-    for (std::vector<cv::Mat>::iterator it = images.begin() ; it != images.end(); ++it){
-        cv::Mat image = *it;
-        cv::Mat blur_image = cv::Mat(26,26,CV_32F);
+std::vector<cv::cuda::GpuMat> apply_blur(std::vector<cv::cuda::GpuMat> images){
+    std::vector<cv::cuda::GpuMat> result;
+    for (std::vector<cv::cuda::GpuMat>::iterator it = images.begin() ; it != images.end(); ++it){
+        cv::cuda::GpuMat image = *it;
+        cv::cuda::GpuMat blur_image = cv::cuda::GpuMat(118,118,CV_32F);
         // Create GPU MAT and apply blur
-        cv::cuda::GpuMat gpu_image, gpu_blurred_image;
-        gpu_image.upload(image);
         cv::Ptr<cv::cuda::Filter> filter = cv::cuda::createGaussianFilter(image.type(), image.type(), Size(3, 3), 0.1);
-        filter->apply(gpu_image, gpu_blurred_image);
-        // cv::cuda::blur(gpu_image, gpu_blurred_image, cv::Size(5,5));
-        gpu_blurred_image.download(blur_image);
-
+        filter->apply(image, blur_image);
         result.push_back(blur_image);
     }
     return result;
 }
 
-
-std::vector<std::vector<uint8_t>> get_features_images(std::vector<cv::Mat> images){
-    std::vector<std::vector<uint8_t>> result;
-    std::vector<cv::Mat> kernels = get_kernels();
-    int x = 0;
+std::vector<cv::cuda::GpuMat> images_to_gpu(std::vector<cv::Mat> images){
+    std::vector<cv::cuda::GpuMat> result;
     for (std::vector<cv::Mat>::iterator it = images.begin() ; it != images.end(); ++it){
         cv::Mat image = *it;
-        std::cout << x << "\n";
-        std::vector<cv::Mat> filtered_images = apply_filters(kernels, image);
-        std::vector<cv::Mat> blurred_filtered_images = apply_blur(filtered_images);
-        std::vector<uint8_t> filtered_images_vector = images_to_vector(blurred_filtered_images);
+        cv::cuda::GpuMat gpu_image;
+        gpu_image.upload(image);
+        result.push_back(gpu_image);
+    }
+    return result;
+}
+
+std::vector<std::vector<uint8_t>> get_features_images(std::vector<cv::Mat> images){
+    std::clock_t begin = std::clock();
+    std::vector<std::vector<uint8_t>> result;
+    std::vector<cv::cuda::GpuMat> kernels = get_kernels();
+    int x = 0;
+    std::vector<cv::cuda::GpuMat> images_gpu = images_to_gpu(images);
+    for (std::vector<cv::cuda::GpuMat>::iterator it = images_gpu.begin() ; it != images_gpu.end(); ++it){
+        cv::cuda::GpuMat image = *it;
+        std::vector<cv::cuda::GpuMat> filtered_images = apply_filters(kernels, image);
+        std::vector<cv::cuda::GpuMat> blurred_filtered_images = apply_blur(filtered_images);
+        std::vector<cv::Mat> blurred_filtered_images_cpu = gpu_to_images(blurred_filtered_images);
+        std::vector<uint8_t> filtered_images_vector = images_to_vector(blurred_filtered_images_cpu);
         result.push_back(filtered_images_vector);
         x++;
+        if (x == 1000){
+            std::clock_t end = std::clock();
+            double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+            std::cout << elapsed_secs << "\n";
+        }
+    }
+    return result;
+}
+
+std::vector<cv::Mat> gpu_to_images(std::vector<cv::cuda::GpuMat> images){
+    std::vector<cv::Mat> result;
+    for (std::vector<cv::cuda::GpuMat>::iterator it = images.begin() ; it != images.end(); ++it){
+        cv::cuda::GpuMat image = *it;
+        cv::Mat image_cpu;
+        image.download(image_cpu);
+        result.push_back(image_cpu);
     }
     return result;
 }

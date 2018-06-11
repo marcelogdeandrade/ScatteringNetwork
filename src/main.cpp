@@ -13,6 +13,8 @@
 #include "mnist/mnist_reader.hpp"
 #include <math.h>
 #include "main.hpp"
+#include <ctime>
+
 
 using namespace cv;
 using namespace cv::ml;
@@ -169,17 +171,22 @@ std::vector<cv::Mat> apply_blur(std::vector<cv::Mat> images){
 
 
 std::vector<std::vector<uint8_t>> get_features_images(std::vector<cv::Mat> images){
+    std::clock_t begin = std::clock();
     std::vector<std::vector<uint8_t>> result;
     std::vector<cv::Mat> kernels = get_kernels();
     int x = 0;
     for (std::vector<cv::Mat>::iterator it = images.begin() ; it != images.end(); ++it){
         cv::Mat image = *it;
-        std::cout << x << "\n";
         std::vector<cv::Mat> filtered_images = apply_filters(kernels, image);
         std::vector<cv::Mat> blurred_filtered_images = apply_blur(filtered_images);
         std::vector<uint8_t> filtered_images_vector = images_to_vector(blurred_filtered_images);
         result.push_back(filtered_images_vector);
         x++;
+        if (x == 1000){
+            std::clock_t end = std::clock();
+            double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+            std::cout << elapsed_secs << "\n";
+        }
     }
     return result;
 }

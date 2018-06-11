@@ -68,7 +68,7 @@ images_to_features* get_images_to_features(){
     std::vector<cv::Mat> training_images_mat;
     std::vector<std::vector<uint8_t>>::iterator it_train;
     for(it_train = dataset.training_images.begin(); it_train != dataset.training_images.end(); it_train++){
-        cv::Mat M = cv::Mat(28,28,CV_32F);
+        cv::Mat M = cv::Mat(120,120,CV_32F);
         std::vector<uint8_t> aux_vec = *it_train;
         std::memcpy(M.data, aux_vec.data(), aux_vec.size());
         training_images_mat.push_back(M);
@@ -78,7 +78,7 @@ images_to_features* get_images_to_features(){
     std::vector<cv::Mat> test_images_mat;
     std::vector<std::vector<uint8_t>>::iterator it_test;
     for(it_test = dataset.test_images.begin(); it_test != dataset.test_images.end(); it_test++){
-        cv::Mat M = cv::Mat(28,28,CV_32F);
+        cv::Mat M = cv::Mat(120,120,CV_32F);
         std::vector<uint8_t> aux_vec = *it_test;
         std::memcpy(M.data, aux_vec.data(), aux_vec.size());
         test_images_mat.push_back(M);
