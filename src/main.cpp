@@ -127,7 +127,7 @@ int main() {
 std::vector<cv::Mat> get_kernels(){
     std::vector<cv::Mat> result;
     int num_kernels = 8;
-    int kernel_size = 28;
+    int kernel_size = 20;
     double sig = 1, lm = 1, gm = 0.02, ps = 0, theta = 0;
     for (int i = 0; i < num_kernels; i++){
         cv::Mat kernel = cv::getGaborKernel(cv::Size(kernel_size,kernel_size), sig, theta, lm, gm, ps, CV_32F);
