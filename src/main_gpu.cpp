@@ -128,7 +128,7 @@ int main() {
 std::vector<cv::cuda::GpuMat> get_kernels(){
     std::vector<cv::cuda::GpuMat> result;
     int num_kernels = 8;
-    int kernel_size = 3;
+    int kernel_size = 20;
     double sig = 1, lm = 1, gm = 0.02, ps = 0, theta = 0;
     for (int i = 0; i < num_kernels; i++){
         cv::cuda::GpuMat kernel_gpu;
